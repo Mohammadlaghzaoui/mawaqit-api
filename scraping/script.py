@@ -24,7 +24,7 @@ def fetch_mawaqit(masjid_id:str):
         if retrieved_data:
             return json.loads(retrieved_data)
 
-    url = f"https://mawaqit.net/fr/m/{masjid_id}"
+    url = f"https://mawaqit.net/nl/m/{masjid_id}"
     r = requests.get(url)
     if r.status_code == 200:
         soup = BeautifulSoup(r.text, 'html.parser')
