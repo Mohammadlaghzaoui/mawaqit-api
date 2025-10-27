@@ -28,9 +28,10 @@ def fetch_mawaqit(masjid_id:str):
     r = requests.get(url)
     if r.status_code == 200:
         soup = BeautifulSoup(r.text, 'html.parser')
-        script = soup.find('script', string=re.compile(r'var confData = (.*?);', re.DOTALL))
+        searchString = r'(?:var|let)\s+confData\s*=\s*(.*?);'
+        script = soup.find('script', string=re.compile(searchString, re.DOTALL))
         if script:
-            mawaqit = re.search(r'var confData = (.*?);', script.string, re.DOTALL)
+            mawaqit = re.search(searchString, script.string, re.DOTALL)
             if mawaqit:
                 conf_data_json = mawaqit.group(1)
                 conf_data = json.loads(conf_data_json)
@@ -77,6 +78,24 @@ def get_month(masjid_id, month_number):
         for prayer in month.values()
     ]
     return prayer_times_list
+
+def get_month_iqama(masjid_id, month_number):
+    if month_number < 1 or month_number > 12:
+        raise HTTPException(status_code=400, detail=f"Month number should be between 1 and 12")
+    confData = fetch_mawaqit(masjid_id)
+    month = confData["iqamaCalendar"][month_number - 1]
+    iqama_times_list = [
+        models.IqamaPrayerTimes( 
+            fajr=iqama[0],
+            dohr=iqama[1],
+            asr=iqama[2],
+            maghreb=iqama[3],
+            icha=iqama[4]
+        )
+        for iqama in month.values()
+    ]
+
+    return iqama_times_list
 
 def get_announcements(masjid_id: int) -> List[models.Announcement]:
     confData = fetch_mawaqit(masjid_id)
